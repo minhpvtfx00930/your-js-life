@@ -22,6 +22,7 @@ defaultBtn.addEventListener("change", function () {
 document.getElementById('submitBtn').addEventListener('click', () => {
   // disable this button to prevent multiple clicks
   document.getElementById('submitBtn').disabled = true;
+  document.getElementById('loading').style.display = "inline-block"
   submitJSONform()
 });
 
@@ -39,26 +40,52 @@ try {
 }
 //Services
 function add_box() {
-    let services_box = document.getElementsByClassName('what-i-do-item')[0]
+    let services_box = document.getElementsByClassName('what-i-do-item')[0];
+    
+    // let input_tags = document.getElementsByClassName('what-i-do-item').length + 1;
     let parent_box = services_box.parentNode;
     let newField = services_box.cloneNode(true);
+    newField.setAttribute('id', Math.random() * 100);
+
     parent_box.append(newField); 
+    console.log(newField.getAttribute('id'));
 }
 
-function remove_box() {
+function remove_box(event) {
     
-    let array = document.getElementsByClassName('borderWhatIDo')     
-    let services_box = document.getElementsByClassName('what-i-do-item')[0]
+    let array = document.getElementsByClassName('borderWhatIDo')   
+    let services_box = document.getElementsByClassName('what-i-do-item')[0]    
     let remove_button = document.getElementsByClassName('button-education-item');
     if(array.length > 1){
-        services_box.remove(array);
+        event.parentNode.parentNode.parentNode.remove()
     }
-    else{
-        alert("Are you sure you want to delete this section?")
 
-    }
+    // let array = document.getElementsByClassName('borderWhatIDo')
+    // var getId = document.getElementById(this);
+
+    
+    // let services_box = document.getElementsByClassName('what-i-do-item')[0]
+    // for (let index = 0; index < array.length; index++) {
+    //     if(array.length > 1 && document.getElementsByClassName('borderWhatIDo')[index].getAttribute('id') === getId){
+    //         document.getElementsByClassName('borderWhatIDo')[index].remove();
+    //     }
+        
+    // }
+   
+        
         
 }
+function reply_click(clicked_id)
+  {
+     console.log(clicked_id)
+      
+  }
+//confirm-delete
+// function confirmDelete(){
+//     confirm("Bấm vào nút OK để tiếp tục");
+// }
+
+
 //MyEducation
 function add_box_education() {
     let mySkill_box = document.getElementsByClassName('boxMyEducation')[0];
@@ -67,12 +94,13 @@ function add_box_education() {
     parent_box.append(newField); 
 }
 
-function remove_box_education() {
+function remove_box_education(event) {
+    console.log(event)
     let array = document.getElementsByClassName('borderEducation')
     let mySkill_box = document.getElementsByClassName('boxMyEducation')[0]  
     if(array.length > 1){
-        mySkill_box.remove(array);
-    }      
+        event.parentNode.parentNode.parentNode.remove()
+    }     
            
         
 }
@@ -84,12 +112,12 @@ function add_box_experience() {
     parent_box.append(newField); 
 }
 
-function remove_box_experience() {
+function remove_box_experience(event) {
     let array = document.getElementsByClassName('borderExperience')
     let mySkill_box = document.getElementsByClassName('boxMyExperience')[0]    
     if(array.length > 1){
-        mySkill_box.remove(array);
-    }
+        event.parentNode.parentNode.parentNode.remove()
+    } 
         
 }
 //MySkills
@@ -100,14 +128,16 @@ function add_box_skills() {
     parent_box.append(newField); 
 }
 
-function remove_box_skills() {
+function remove_box_skills(event) {
     let array = document.getElementsByClassName('my-skill-item')
     let mySkill_box = document.getElementsByClassName('boxMySkills')[0]  
     if(array.length > 1){
-        mySkill_box.remove(array);
-    }  
-        
+        event.parentNode.parentNode.parentNode.remove()
+    } 
+
+
 }
+
 
 function getAllInputData(){
     //Intro
@@ -170,7 +200,7 @@ function getAllInputData(){
         workingtime: workingTime,
         name: nameYearOfExperience, 
         gmail: gmail,
-        date_of_birth: dateOfBirth,       
+        dateOfBirth: dateOfBirth,
         address_year_of_experience: addressYearOfExperience,
         facebook: facebook,
         github: github, 
@@ -184,7 +214,17 @@ function getAllInputData(){
 
 function submitJSONform(){
   let data = getAllInputData();
+  // if any of data is empty, alert, then return
+  if (data.phone == '' || data.job == '' || data.address == '' || data.nickname == '' || data.introduction == '' || data.workingtime == '' || data.name == '' || data.gmail == '' || data.dateOfBirth == '' || data.address_year_of_experience == ''  || data.services.length == 0 || data.education.length == 0 || data.experience.length == 0 || data.skills.length == 0) {
+    alert("Please fill all the information!");
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('loading').style.display = "none"
+    return;
+  }
+  document.getElementById('submitBtn').disabled = true;
   let json = JSON.stringify(data);
+  
+  document.getElementById('loading').style.display = "inline-block";
   fetch('/create-portfolio', {
     method: 'POST',
     headers: {
@@ -194,13 +234,21 @@ function submitJSONform(){
   }).then(res => res.json())
       .then(id => {
         console.log(id);
+        if (id === -1) {
+          alert("Please fill all the information!");
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('loading').style.display = "none"
+          return;
+        }
         submitFileAndIdAndRedirect(id);
       }).catch(err => console.log(err));
 }
 
 function submitFileAndIdAndRedirect(id) {
   let formData = new FormData();
-  formData.append('file', document.querySelectorAll('input[name="file"]')[0].files[0]);
+  if (document.querySelectorAll('input[name="file"]')[0].files[0] !== undefined) {
+    formData.append('file', document.querySelectorAll('input[name="file"]')[0].files[0]);
+  }
   formData.append('id', id);
   fetch('/create-portfolio/file', {
       method: 'POST',
@@ -212,6 +260,9 @@ function submitFileAndIdAndRedirect(id) {
       // if success, redirect to portfolio/:id
       if (res.status === 'success') {
         window.location.href = `/success?id=${id}`;
+
       }
     })
 }
+
+
